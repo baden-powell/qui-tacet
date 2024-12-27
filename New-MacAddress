@@ -1,0 +1,61 @@
+Function New-MacAddress {
+    <# 
+    .SYNOPSIS 
+        Generates a random MAC address.
+
+    .DESCRIPTION 
+        Generates a random MAC address with 12 characters.
+
+    .PARAMETER Count
+        Specifies the number of MAC addresses that will be generated. By default, one MAC address will be generated.
+    
+    .EXAMPLE
+        New-MacAddress
+
+        Generates one MAC address.
+    
+    .EXAMPLE
+        New-MacAddress -Count 5
+     
+        Generates five MAC addresses.
+    
+    .INPUTS 
+        None 
+    
+    .OUTPUTS 
+        None 
+    
+    .LINK
+ 
+    .NOTES 
+        Name:    New-MacAddress 
+        Version: 1.0 
+        Author:  Eric Joseph
+        Date:    15 November 2024
+ 
+    #> 
+
+    Param(
+        [Parameter(
+        ValueFromPipeline=$False,
+        Position=0,
+        Mandatory=$False)]
+        [ValidateRange(1,18446744073709551615)][UInt64]$Count=1
+    )
+    $Char = @()
+    $Char += 48..57
+    $Char += 97..102
+    $Characters = $Char | ForEach-Object {[Char]$_}
+    $Out = @()
+    1..$Count | ForEach-Object {
+        $UnformattedMAC = (1..12 | ForEach-Object {$Characters | Get-Random}) -Join ""
+        $Out += New-Object PSObject -Property ([Ordered]@{
+            Unformatted = $UnformattedMAC
+            Colon = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join ":"
+            Dash = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "-"
+            Dot = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "."
+        })
+    }
+    $Out
+}
+
