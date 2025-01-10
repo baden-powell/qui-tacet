@@ -4,20 +4,79 @@ Function New-MacAddress {
         Generates a random MAC address.
 
     .DESCRIPTION 
-        Generates a random MAC address with 12 characters.
+        Generates a random MAC address. The number of MAC addresses as well as the characters each starts and ends with can be specified. However, no more than 10 characters can be specified with the StartsWith and EndsWith parameters cumulatively. Generated MAC addresses are provided in the following formats: unformatted, colon, dash, and dot.
 
     .PARAMETER Count
         Specifies the number of MAC addresses that will be generated. By default, one MAC address will be generated.
+
+    .PARAMETER StartsWith
+        Specifies the hexidecimal characters that generated MAC addresses should start with. The cumultative character count of the StartsWith and EndsWith parameters cannot exceed 11.
+
+    .PARAMETER EndsWith
+        Specifies the hexidecimal characters that generated MAC addresses should end with. The cumultative character count of the StartsWith and EndsWith parameters cannot exceed 11.
+
+    .PARAMETER Sequential
+        Specifies that the generated MAC addresses should be sequential.
     
     .EXAMPLE
         New-MacAddress
 
-        Generates one MAC address.
+        Generates one random MAC address.
     
     .EXAMPLE
         New-MacAddress -Count 5
      
-        Generates five MAC addresses.
+        Generates five random MAC addresses.
+
+        Unformatted  Colon             Dash              Dot
+        -----------  -----             ----              ---
+        84c877d471af 84:c8:77:d4:71:af 84-c8-77-d4-71-af 84.c8.77.d4.71.af
+        a9a4c34ecabf a9:a4:c3:4e:ca:bf a9-a4-c3-4e-ca-bf a9.a4.c3.4e.ca.bf
+        7a79e9017515 7a:79:e9:01:75:15 7a-79-e9-01-75-15 7a.79.e9.01.75.15
+        d111e2fadff9 d1:11:e2:fa:df:f9 d1-11-e2-fa-df-f9 d1.11.e2.fa.df.f9
+        422349a4b8c0 42:23:49:a4:b8:c0 42-23-49-a4-b8-c0 42.23.49.a4.b8.c0
+
+    .EXAMPLE
+        New-MacAddress -Count 3 -StartsWith 005056
+
+        Generates three random MAC addresses that start with 005056.
+
+        Unformatted  Colon             Dash              Dot
+        -----------  -----             ----              ---
+        005056a7e631 00:50:56:a7:e6:31 00-50-56-a7-e6-31 00.50.56.a7.e6.31
+        005056ea885c 00:50:56:ea:88:5c 00-50-56-ea-88-5c 00.50.56.ea.88.5c
+        005056403d94 00:50:56:40:3d:94 00-50-56-40-3d-94 00.50.56.40.3d.94
+
+    .EXAMPLE
+        New-MacAddress -Count 5 -StartsWith 089204 -EndsWith 12
+
+        Generates five random MAC addresses that start with 089204 and end with 12.
+
+        Unformatted  Colon             Dash              Dot
+        -----------  -----             ----              ---
+        0892048e8312 08:92:04:8e:83:12 08-92-04-8e-83-12 08.92.04.8e.83.12
+        089204e4c512 08:92:04:e4:c5:12 08-92-04-e4-c5-12 08.92.04.e4.c5.12
+        08920451cb12 08:92:04:51:cb:12 08-92-04-51-cb-12 08.92.04.51.cb.12
+        0892046b3a12 08:92:04:6b:3a:12 08-92-04-6b-3a-12 08.92.04.6b.3a.12
+        089204e34c12 08:92:04:e3:4c:12 08-92-04-e3-4c-12 08.92.04.e3.4c.12
+
+    .EXAMPLE
+        New-MacAddress -Count 10 -StartsWith f46d -EndsWith 38b6 -Sequential
+
+        Generates ten random MAC addresses that start with f46d, end with 38b6, and are in sequential order.
+
+        Unformatted  Colon             Dash              Dot
+        -----------  -----             ----              ---
+        f46d11ac38b6 f4:6d:11:ac:38:b6 f4-6d-11-ac-38-b6 f4.6d.11.ac.38.b6
+        f46d11ad38b6 f4:6d:11:ad:38:b6 f4-6d-11-ad-38-b6 f4.6d.11.ad.38.b6
+        f46d11ae38b6 f4:6d:11:ae:38:b6 f4-6d-11-ae-38-b6 f4.6d.11.ae.38.b6
+        f46d11af38b6 f4:6d:11:af:38:b6 f4-6d-11-af-38-b6 f4.6d.11.af.38.b6
+        f46d11b038b6 f4:6d:11:b0:38:b6 f4-6d-11-b0-38-b6 f4.6d.11.b0.38.b6
+        f46d11b138b6 f4:6d:11:b1:38:b6 f4-6d-11-b1-38-b6 f4.6d.11.b1.38.b6
+        f46d11b238b6 f4:6d:11:b2:38:b6 f4-6d-11-b2-38-b6 f4.6d.11.b2.38.b6
+        f46d11b338b6 f4:6d:11:b3:38:b6 f4-6d-11-b3-38-b6 f4.6d.11.b3.38.b6
+        f46d11b438b6 f4:6d:11:b4:38:b6 f4-6d-11-b4-38-b6 f4.6d.11.b4.38.b6
+        f46d11b538b6 f4:6d:11:b5:38:b6 f4-6d-11-b5-38-b6 f4.6d.11.b5.38.b6
     
     .INPUTS 
         None 
@@ -29,9 +88,10 @@ Function New-MacAddress {
  
     .NOTES 
         Name:    New-MacAddress 
-        Version: 1.0 
+        Version: 1.1
         Author:  Eric Joseph
-        Date:    15 November 2024
+        Created: 15 November 2024
+        Updated: 10 January 2025
  
     #> 
 
@@ -40,22 +100,68 @@ Function New-MacAddress {
         ValueFromPipeline=$False,
         Position=0,
         Mandatory=$False)]
-        [ValidateRange(1,18446744073709551615)][UInt64]$Count=1
+        [ValidateRange(1,18446744073709551615)][UInt64]$Count=1,
+        [Parameter(
+        ValueFromPipeline=$False,
+        Position=1,
+        Mandatory=$False)]
+        [String]$StartsWith=$Null,
+        [Parameter(
+        ValueFromPipeline=$False,
+        Position=2,
+        Mandatory=$False)]
+        [String]$EndsWith=$Null,
+        [Parameter(
+        ValueFromPipeline=$False,
+        Mandatory=$False)]
+        [Switch]$Sequential
     )
     $Char = @()
     $Char += 48..57
     $Char += 97..102
     $Characters = $Char | ForEach-Object {[Char]$_}
-    $Out = @()
-    1..$Count | ForEach-Object {
-        $UnformattedMAC = (1..12 | ForEach-Object {$Characters | Get-Random}) -Join ""
-        $Out += New-Object PSObject -Property ([Ordered]@{
-            Unformatted = $UnformattedMAC
-            Colon = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join ":"
-            Dash = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "-"
-            Dot = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "."
-        })
+    If ($StartsWith -ne $Null -and $False -in ($StartsWith.ToCharArray() | ForEach-Object {$_ -in $Characters})) {
+        Write-Error "Invalid hexidecimal character(s) provided for StartsWith parameter."
+    } Elseif ($EndsWith -ne $Null -and $False -in ($EndsWith.ToCharArray() | ForEach-Object {$_ -in $Characters})) {
+        Write-Error "Invalid hexidecimal character(s) provided for EndsWith parameter."
+    } Elseif (($StartsWith.Length + $EndsWith.Length) -ge 11) {
+        Write-Error "Too many characters provided for the StartsWith and/or EndsWith parameter(s)."
+    } Else {
+        $Out = @()
+        $Length = 12 - ($StartsWith.Length + $EndsWith.Length)
+        If ($Count -gt ([Math]::Pow(16,$Length))) {
+            $Count = [Math]::Pow(16,$Length)
+        }
+        If (!$Sequential) {
+            1..$Count | ForEach-Object {
+                $UnformattedMAC = $Null
+                $Generate = $False
+                While ($Generate -eq $False) {
+                    $UnformattedMAC = $StartsWith.ToLower() + $((1..$Length | ForEach-Object {$Characters | Get-Random}) -Join "") + $EndsWith.ToLower()
+                    If ($UnformattedMAC -notin $Out.Unformatted) {
+                        $Generate = $True
+                    }
+                }
+                $Out += New-Object PSObject -Property ([Ordered]@{
+                    Unformatted = $UnformattedMAC
+                    Colon = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join ":"
+                    Dash = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "-"
+                    Dot = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "."
+                })
+            }
+        } Else {
+            $RandomStart = [Int](Get-Random -Maximum ($([Math]::Pow(16,$Length))-$Count) -Minimum 0)
+            $RandomStart..$($RandomStart+($Count-1)) | ForEach-Object {
+                $UnformattedMAC = $Null
+                $UnformattedMAC = $StartsWith.ToLower() + $(If ($_ -lt 16) {"0"}) + $([Convert]::ToString($_,16)) + $EndsWith.ToLower()
+                $Out += New-Object PSObject -Property ([Ordered]@{
+                    Unformatted = $UnformattedMAC
+                    Colon = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join ":"
+                    Dash = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "-"
+                    Dot = ($UnformattedMAC -Split '(.{2})' | Where-Object {$_}) -Join "."
+                })
+            }
+        }
+        $Out
     }
-    $Out
 }
-
