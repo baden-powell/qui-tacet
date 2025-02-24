@@ -1,0 +1,107 @@
+Function Get-RemoteApplication {
+    <#
+    .SYNOPSIS
+        This function will search remote computers for installed applications.
+
+    .DESCRIPTION
+        This function will search remote computers for installed applications. This cmdlet parses specific portions of the remote computer's registry.
+    
+    .PARAMETER ComputerName
+        A single computer or an array of computer names.  The default is localhost ($env:COMPUTERNAME).
+    
+    .PARAMETER Query
+        Specifies the query or queries with which to search the remote computer's registry.
+    
+    .EXAMPLE
+        Get-RemoteApplication
+
+        This example retrieves all installed applications on the local computer.
+
+    .EXAMPLE
+        Get-RemoteApplication -Computer TESTMACHINE01 -Query Microsoft
+
+        This example queries the remote computer TESTMACHINE01 for the term "Microsoft."
+
+    .EXAMPLE
+        "TESTMACHINE02" | Get-RemoteApplication Contoso
+
+        This example queries the remote computer TESTMACHINE02 for the term "Contoso."
+
+    .EXAMPLE
+        Get-Content .\Computers.txt | Get-RemoteApplication Apple,Blueberry,Cherry
+
+        This example queries the remote computers found in the file Computers.txt for the terms "Apple", "Blueberry", and "Cherry."
+
+    .NOTES
+        Author:  Eric Joseph
+        Email:   eric.a.joseph3.ctr@health.mil
+        Date:    7/25/2017
+        Updated: 2/24/2025
+    #>
+
+    Param(
+        [Parameter(
+        ValueFromPipeline=$True,
+        ValueFromPipelineByPropertyName=$True,
+        Position=0,
+        Mandatory=$False)]
+        [Alias("CN","__SERVER","MachineName")]
+        [String[]]$ComputerName=$env:COMPUTERNAME,
+        [Parameter(
+        Position=1,
+        Mandatory=$False)]
+        [String[]]$Query
+    )
+    Begin {
+        $ErrorActionPreference = "SilentlyContinue"
+        If (!$Query) {
+            $Query = "*"
+        }
+    }
+    Process {
+        Foreach ($Computer in ($ComputerName.ToUpper().Trim())) {
+            If ($Computer -eq "." -or $Computer -eq "LOCALHOST") {
+                $Computer = $env:COMPUTERNAME
+            }
+            If (Test-Connection $Computer -Count 1 -Quiet) {
+                Try {
+                    $Reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey([Microsoft.Win32.RegistryHive]"LocalMachine",$Computer)
+                    Foreach ($Root in ("SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall","SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")) {
+                        If ($Reg.OpenSubKey($Root)) {
+                            Foreach ($Key in ($Reg.OpenSubKey($Root).GetSubKeyNames())) {
+                                Foreach ($Search in ($Query | Select-Object -Unique)) {
+                                    $Reg.OpenSubKey("$Root\$Key") | Where-Object {$_.GetValue("DisplayName") -like "*$Search*" -or $_.GetValue("Publisher") -like "*$Search*" -or $_.GetValue("DisplayVersion") -like "*$Search*" -or $_.GetValue("Comments") -like "*$Search*"} | ForEach-Object {
+                                        New-Object PSObject -Property ([Ordered]@{
+                                            ComputerName = $Computer
+                                            Key = "HKEY_LOCAL_MACHINE\$Root\$Key"
+                                            Application = $_.GetValue("DisplayName")
+                                            Version = $(If ($_.GetValue("DisplayVersion")) {$Ver = $_.GetValue("DisplayVersion"); Try {$Version = ($Ver.ToCharArray() | Where-Object {$_ -match "\d" -or $_ -eq "."}) -Join ""; $(New-Object System.Version $Version)} Catch {$Ver}})
+                                            MajorVersion = $_.GetValue("VersionMajor")
+                                            MinorVersion = $_.GetValue("VersionMinor")
+                                            Comments = $_.GetValue("Comments")
+                                            Publisher = $_.GetValue("Publisher")
+                                            InstallDate = $(If ($_.GetValue("InstallDate")) {If ($_.GetValue("InstallDate").Length -eq 8) {$Date = $_.GetValue("InstallDate"); Get-Date -Year $Date.Substring(0,4) -Month $Date.Substring(4,2) -Day $Date.Substring(6,2) -Hour 0 -Minute 0 -Second 0} Else {$_.GetValue("InstallDate")}})
+                                            UninstallString = $_.GetValue("UninstallString")
+                                            AboutInfo = $_.GetValue("URLInfoAbout")
+                                            UpdateInfo = $_.GetValue("URLUpdateInfo")
+                                            HelpInfo = $_.GetValue("HelpLink")
+                                        })
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Catch {
+                    $Error[0].Exception.Message.Split("`n")[0]
+                }
+            }
+            Else {
+                $Error[0].Exception.Message.Split("`n")[0]
+            }
+        }
+    }
+    End {
+        $ErrorActionPreference = "Continue"
+    }
+}
